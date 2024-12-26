@@ -1,0 +1,134 @@
+mysql> create database hotelbookingsystem;
+Query OK, 1 row affected (0.02 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> show databases;
++--------------------------+
+| Database                 |
++--------------------------+
+| banking                  |
+| employeemanagementsystem |
+| hotelbookingsystem       |
+| information_schema       |
+| library_db               |
+| librarydb                |
+| movierental              |
+| mysql                    |
+| mysql_python             |
+| performance_schema       |
+| studentrecordsmgmt       |
+| sys                      |
++--------------------------+
+12 rows in set (0.00 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> use hotelbookingsystem;
+Database changed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> create table Rooms(
+    -> RoomID INT PRIMARY KEY AUTO_INCREMENT,
+    -> RoomNumber VARCHAR(10),
+    -> RoomType VARCHAR(50),
+    -> Capacity INT,
+    -> PricePerNight DECIMAL(10, 2),
+    -> IsAvailable BOOLEAN DEFAULT TRUE
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> create table Customers(
+    -> RoomID INT PRIMARY KEY AUTO_INCREMENT,^C
+mysql> CREATE TABLE Customers (
+    ->     CustomerID INT PRIMARY KEY AUTO_INCREMENT,
+    ->     FirstName VARCHAR(50),
+    ->     LastName VARCHAR(50),
+    ->     Email VARCHAR(100) UNIQUE,
+    ->     PhoneNumber VARCHAR(15),
+    ->     Address TEXT
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> CREATE TABLE Reservations (
+    ->     ReservationID INT PRIMARY KEY AUTO_INCREMENT,
+    ->     CustomerID INT,
+    ->     RoomID INT,
+    ->     CheckInDate DATE,
+    ->     CheckOutDate DATE,
+    ->     TotalAmount DECIMAL(10, 2),
+    ->     Status ENUM('Confirmed', 'Cancelled', 'Completed') DEFAULT 'Confirmed',
+    ->     FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE,
+    ->     FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.05 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> CREATE TABLE Payments (
+    ->     PaymentID INT PRIMARY KEY AUTO_INCREMENT,
+    ->     ReservationID INT,
+    ->     PaymentDate DATE,
+    ->     Amount DECIMAL(10, 2),
+    ->     PaymentMethod ENUM('Credit Card', 'Debit Card', 'Cash', 'Online'),
+    ->     FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.05 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> INSERT INTO Rooms (RoomNumber, RoomType, Capacity, PricePerNight, IsAvailable)
+    -> VALUES
+    -> ('101', 'Single', 1, 100.00, TRUE),
+    -> ('102', 'Double', 2, 150.00, TRUE),
+    -> ('103', 'Suite', 4, 300.00, TRUE);
+Query OK, 3 rows affected (0.01 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address)
+    -> VALUES
+    -> ('John', 'Doe', 'customer@example.com', '1234567890', '123 Main St'),
+    -> ('Jane', 'Smith', 'jane@example.com', '9876543210', '456 Elm St');
+Query OK, 2 rows affected (0.01 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> INSERT INTO Reservations (CustomerID, RoomID, CheckInDate, CheckOutDate, TotalAmount, Status)
+    -> VALUES
+    -> (1, 1, '2024-12-20', '2024-12-26', 600.00, 'Confirmed'),
+    -> (2, 2, '2024-12-28', '2024-12-30', 300.00, 'Completed');
+Query OK, 2 rows affected (0.01 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> INSERT INTO Payments (ReservationID, PaymentDate, Amount, PaymentMethod)
+    -> VALUES
+    -> (1, '2024-12-15', 600.00, 'Credit Card'),
+    -> (2, '2024-12-29', 300.00, 'Online');
+Query OK, 2 rows affected (0.01 sec)
+Records: 2  Duplicates: 0  Warnings: 0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> SELECT *
+    -> FROM Rooms
+    -> WHERE RoomID NOT IN (
+    ->     SELECT RoomID
+    ->     FROM Reservations
+    ->     WHERE (CheckInDate <= '2024-12-31' AND CheckOutDate >= '2024-12-25')
+    -> );
++--------+------------+----------+----------+---------------+-------------+
+| RoomID | RoomNumber | RoomType | Capacity | PricePerNight | IsAvailable |
++--------+------------+----------+----------+---------------+-------------+
+|      3 | 103        | Suite    |        4 |        300.00 |           1 |
++--------+------------+----------+----------+---------------+-------------+
+1 row in set (0.00 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> SELECT SUM(Amount) AS TotalRevenue
+    -> FROM Payments
+    -> WHERE PaymentDate BETWEEN '2024-01-01' AND '2024-12-31';
++--------------+
+| TotalRevenue |
++--------------+
+|       900.00 |
++--------------+
+1 row in set (0.00 sec)
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+mysql> SELECT r.*
+    -> FROM Reservations r
+    -> JOIN Customers c ON r.CustomerID = c.CustomerID
+    -> WHERE c.Email = 'customer@example.com';
++---------------+------------+--------+-------------+--------------+-------------+-----------+
+| ReservationID | CustomerID | RoomID | CheckInDate | CheckOutDate | TotalAmount | Status    |
++---------------+------------+--------+-------------+--------------+-------------+-----------+
+|             1 |          1 |      1 | 2024-12-20  | 2024-12-26   |      600.00 | Confirmed |
++---------------+------------+--------+-------------+--------------+-------------+-----------+
+1 row in set (0.00 sec)
+Query OK, 0 rows affected (0.04 sec)
